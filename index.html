@@ -1,13 +1,310 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Finance Manager - Expense Tracker</title>
+  <style>
+    /* Global Styles */
+    body {
+      font-family: 'Times New Roman', Times, serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    /* Container Styling */
+    .container {
+      max-width: 800px;
+      width: 100%;
+      margin: 20px;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Heading Styling */
+    h1, h2 {
+      text-align: center;
+      color: #333;
+    }
+
+    /* Input Section Styling */
+    .input-section {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .input-section input {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+
+    .input-section button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #28a745;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .input-section button:hover {
+      background-color: #218838;
+    }
+
+    /* Table Styling */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 12px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #333;
+      color: #fff;
+    }
+
+    /* Delete Button Styling */
+    button.delete-btn {
+      background-color: #dc3545;
+      color: #fff;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button.delete-btn:hover {
+      background-color: #c82333;
+    }
+
+    /* Chart Container Styling */
+    .chart-container {
+      position: relative;
+      height: 300px;
+      width: 100%;
+      margin-bottom: 20px;
+    }
+
+    /* Saving Tips Styling */
+    .saving-tips {
+      background-color: #f8f9fa;
+      padding: 15px;
+      border-radius: 4px;
+      margin-top: 20px;
+    }
+
+    .saving-tips h3 {
+      margin-top: 0;
+      color: #333;
+    }
+
+    .saving-tips ul {
+      list-style-type: disc;
+      padding-left: 20px;
+    }
+
+    .saving-tips li {
+      margin-bottom: 10px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Finance Manager</h1>
+    <h2>Expense Tracker</h2>
+
+    <!-- Expense Input Section -->
+    <div class="input-section">
+      <input type="text" id="desc" placeholder="Expense Description" />
+      <input type="number" id="amount" placeholder="Amount (₹)" />
+      <button onclick="addExpense()">Add Expense</button>
+    </div>
+
+    <!-- Expense Table -->
+    <table>
+      <thead>
+        <tr>
+          <th>Description</th>
+          <th>Amount (₹)</th>
+          <th>Date</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="expense-list"></tbody>
+    </table>
+
+    <!-- Total Expenses -->
+    <h2>Total Expenses: ₹<span id="total">0.00</span></h2>
+
+    <!-- Chart Container -->
+    <div class="chart-container">
+      <canvas id="expenseChart"></canvas>
+    </div>
+
+    <!-- Saving Tips -->
+    <div class="saving-tips">
+      <h3>Saving Tips</h3>
+      <ul>
+        <li>Track your expenses regularly to identify unnecessary spending.</li>
+        <li>Set a monthly budget and stick to it.</li>
+        <li>Avoid impulse purchases; think before you buy.</li>
+        <li>Use cash instead of credit cards to limit overspending.</li>
+        <li>Save at least 20% of your income every month.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Include Chart.js Library -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    // Wait for the DOM to load before running code
+    document.addEventListener("DOMContentLoaded", loadExpenses);
+
+    /**
+     * Adds an expense to the local storage and updates the UI.
+     */
+    function addExpense() {
+      // Retrieve values from input fields
+      const desc = document.getElementById("desc").value.trim();
+      const amount = document.getElementById("amount").value.trim();
+      const date = new Date().toLocaleDateString();
+
+      // Input validation
+      if (!desc || !amount) {
+        alert("Please enter valid expense details.");
+        return;
+      }
+
+      // Create an expense object
+      const expense = { desc, amount: parseFloat(amount), date };
+
+      // Get existing expenses from localStorage or initialize an empty array
+      let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
+      expenses.push(expense);
+
+      // Save the updated expenses array back to localStorage
+      localStorage.setItem("expenses", JSON.stringify(expenses));
+
+      // Clear input fields after adding expense
+      document.getElementById("desc").value = "";
+      document.getElementById("amount").value = "";
+
+      // Refresh the expense list
+      loadExpenses();
+    }
+
+    /**
+     * Loads expenses from localStorage, updates the table, calculates total, and updates the chart.
+     */
+    function loadExpenses() {
+      let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
+      const expenseList = document.getElementById("expense-list");
+      expenseList.innerHTML = ""; // Clear existing rows
+
+      let total = 0;
+
+      // Loop through each expense and create a table row
+      expenses.forEach((expense, index) => {
+        total += expense.amount;
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${expense.desc}</td>
+          <td>₹${expense.amount.toFixed(2)}</td>
+          <td>${expense.date}</td>
+          <td><button class="delete-btn" onclick="deleteExpense(${index})">Delete</button></td>
+        `;
+        expenseList.appendChild(row);
+      });
+
+      // Update total expenses display
+      document.getElementById("total").innerText = total.toFixed(2);
+
+      // Update the chart with the current expenses
+      updateChart(expenses);
+    }
+
+    /**
+     * Deletes an expense from the local storage and updates the UI.
+     * @param {number} index - Index of the expense to delete.
+     */
+    function deleteExpense(index) {
+      let expenses = JSON.parse(localStorage.getItem("expenses"));
+      expenses.splice(index, 1);
+      localStorage.setItem("expenses", JSON.stringify(expenses));
+      loadExpenses();
+    }
+
+    /**
+     * Updates the bar chart to display grouped expense data.
+     * @param {Array} expenses - Array of expense objects.
+     */
+    function updateChart(expenses) {
+      const ctx = document.getElementById("expenseChart").getContext("2d");
+
+      // Destroy existing chart instance if it exists to avoid duplicates
+      if (window.expenseChart) {
+        window.expenseChart.destroy();
+      }
+
+      // Group expenses by description and sum amounts
+      const groupedData = {};
+      expenses.forEach(expense => {
+        if (groupedData[expense.desc]) {
+          groupedData[expense.desc] += expense.amount;
+        } else {
+          groupedData[expense.desc] = expense.amount;
+        }
+      });
+
+      const labels = Object.keys(groupedData);
+      const data = Object.values(groupedData);
+
+      // Create a new bar chart using Chart.js
+      window.expenseChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: "Expense Amount (₹)",
+            data: data,
+            backgroundColor: "rgba(54, 162, 235, 0.6)",
+            borderColor: "rgba(54, 162, 235, 1)",
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+  </script>
+</body>
 </html>
